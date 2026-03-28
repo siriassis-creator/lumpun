@@ -16,6 +16,15 @@ import {
   Search, Edit2, Trash2, X, Image as ImageIcon, Contact, Save, MapPin, Clock, FileText, Plus
 } from 'lucide-react';
 
+type EventType = {
+  id: string;
+  title?: string;
+  date?: string;
+  startTime?: string;
+  endTime?: string;
+  location?: string;
+  description?: string;
+};
 const firebaseConfig = {
   apiKey: "AIzaSyBBPZLN9Q_YBWiDXzA1SE2xluu6dBxhewc",
   authDomain: "lampun.firebaseapp.com",
@@ -112,7 +121,7 @@ const HomeView = () => (
 
 const DashboardView = () => {
   const [memberCount, setMemberCount] = useState(0);
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<EventType[]>([]);
   const [eventsThisMonth, setEventsThisMonth] = useState(0);
 
   useEffect(() => {
@@ -123,12 +132,15 @@ const DashboardView = () => {
     const qEvents = query(collection(db, 'events'), orderBy('date', 'asc'));
     const unsubEvents = onSnapshot(qEvents, (snapshot) => {
       // 🚀 Fix TypeScript Error: บังคับแปลง data() เป็น Object แบบแข็งแกร่ง
-      const fetchedEvents: any[] = snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as Record<string, any>) }));
+      const fetchedEvents: EventType[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...(doc.data() as Omit<EventType, 'id'>)
+      }));
       setEvents(fetchedEvents);
 
       const today = new Date();
       const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-      const count = fetchedEvents.filter((e: any) => e.date && String(e.date).startsWith(currentMonthStr)).length;
+      const count = fetchedEvents.filter(e => e.date && e.date.startsWith(currentMonthStr)).length;
       setEventsThisMonth(count);
     });
 
@@ -480,7 +492,7 @@ const MembersView = () => {
 // ==========================================
 const CalendarView = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<EventType[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -493,7 +505,10 @@ const CalendarView = () => {
   useEffect(() => {
     const q = query(collection(db, 'events'), orderBy('date', 'asc'));
     const unsub = onSnapshot(q, (snapshot) => {
-      setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...(doc.data() as Record<string, any>) })));
+      setEvents(snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...(doc.data() as Omit<EventType, 'id'>)
+      })));
     });
     return () => unsub();
   }, []);
@@ -507,9 +522,20 @@ const CalendarView = () => {
   const dayNames = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
   // 🚀 Fix TypeScript Error: ใช้ Spread Operator ขจัดปัญหาการใช้งาน concat กับ Array ต่างชนิดกัน
-  const emptyCells: (number | null)[] = Array.from({ length: firstDayOfMonth }, () => null);
-  const dayCells: (number | null)[] = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-  const calendarCells: (number | null)[] = [...emptyCells, ...dayCells];
+  const emptyCells: (number | null)[] = Array.from(
+    { length: firstDayOfMonth },
+    () => null
+  );
+  
+  const dayCells: (number | null)[] = Array.from(
+    { length: daysInMonth },
+    (_, i) => i + 1
+  );
+  
+  const calendarCells: (number | null)[] = [
+    ...emptyCells,
+    ...dayCells
+  ];
 
   const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));

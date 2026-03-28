@@ -122,12 +122,12 @@ const DashboardView = () => {
 
     const qEvents = query(collection(db, 'events'), orderBy('date', 'asc'));
     const unsubEvents = onSnapshot(qEvents, (snapshot) => {
-      const fetchedEvents = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // 🚀 แก้ไข: บังคับ Type เป็น as any เพื่อป้องกัน TS Error
+      const fetchedEvents: any[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
       setEvents(fetchedEvents);
 
       const today = new Date();
       const currentMonthStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
-      // 🚀 แก้ไขบรรทัดที่ 1: กำหนด (e: any) ให้ Typescript
       const count = fetchedEvents.filter((e: any) => e.date && e.date.startsWith(currentMonthStr)).length;
       setEventsThisMonth(count);
     });
@@ -139,7 +139,6 @@ const DashboardView = () => {
   }, []);
 
   const todayStr = new Date().toISOString().split('T')[0];
-  // 🚀 แก้ไขบรรทัดที่ 2: กำหนด (e: any) ให้ Typescript
   const upcomingEvents = events.filter((e: any) => e.date && e.date >= todayStr).slice(0, 5);
 
   return (
@@ -240,7 +239,8 @@ const MembersView = () => {
   useEffect(() => {
     const q = query(collection(db, 'members'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      // 🚀 แก้ไข: บังคับ Type เป็น as any
+      setMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)));
     });
     return () => unsubscribe();
   }, []);
@@ -494,7 +494,8 @@ const CalendarView = () => {
   useEffect(() => {
     const q = query(collection(db, 'events'), orderBy('date', 'asc'));
     const unsub = onSnapshot(q, (snapshot) => {
-      setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      // 🚀 แก้ไข: บังคับ Type เป็น as any
+      setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)));
     });
     return () => unsub();
   }, []);
@@ -507,10 +508,11 @@ const CalendarView = () => {
   const monthNames = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
   const dayNames = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
-  // 🚀 แก้ไขบรรทัดที่ 3: กำหนด (number | null)[] ให้ Typescript
-  const calendarCells = (Array.from({ length: firstDayOfMonth }, () => null) as (number | null)[]).concat(
-    Array.from({ length: daysInMonth }, (_, i) => i + 1)
-  );
+  // 🚀 แก้ไข: ใช้ Spread Operator แทน .concat() ป้องกัน TS Error
+  const calendarCells: (number | null)[] = [
+    ...Array.from({ length: firstDayOfMonth }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1)
+  ];
 
   const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
@@ -702,7 +704,8 @@ const AttendanceView = () => {
   useEffect(() => {
     const q = query(collection(db, 'events'), orderBy('date', 'desc'));
     const unsub = onSnapshot(q, (snapshot) => {
-      setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      // 🚀 แก้ไข: บังคับ Type เป็น as any
+      setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)));
     });
     return () => unsub();
   }, []);
@@ -710,7 +713,8 @@ const AttendanceView = () => {
   useEffect(() => {
     const q = query(collection(db, 'members'), orderBy('firstName', 'asc'));
     const unsub = onSnapshot(q, (snapshot) => {
-      setMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      // 🚀 แก้ไข: บังคับ Type เป็น as any
+      setMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any)));
     });
     return () => unsub();
   }, []);
